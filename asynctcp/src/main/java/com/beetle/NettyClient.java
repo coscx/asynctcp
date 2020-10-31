@@ -13,6 +13,7 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.util.concurrent.ScheduledFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * Netty客户端
@@ -25,7 +26,7 @@ public class NettyClient {
     protected static int readerIdleTime = 45;       //读取超时
     protected static int writerIdleTime = 45;       //写入超时
     protected static int allIdleTime = 30;          //全部超时
-
+    private   boolean mayInterruptIfRunning = false;
     private ChannelFuture channelFuture;
     private Channel channel;
     private Bootstrap bootstrap;
@@ -34,6 +35,7 @@ public class NettyClient {
     private String HOST;
     private int PORT;
     protected NettyEventListener listener;
+    private ScheduledFuture<?> future;
     private static NettyClient NETTY_CLIENT;
     private CopyOnWriteArrayList<byte[]> mCachedRequestList = new CopyOnWriteArrayList();
     protected static NettyClient getInstance() {
@@ -115,31 +117,15 @@ public class NettyClient {
                 NettyClient.getInstance().connect();
                 mCachedRequestList.add(message);
 
-            }else {
-                NettyLog.e("发送：" + message);
-                channel.writeAndFlush(Unpooled.copiedBuffer(message)).sync();
             }
+            NettyLog.e("发送：" + message);
+            channel.writeAndFlush(Unpooled.copiedBuffer(message)).sync();
 
         } catch (Exception e) {
             NettyLog.e(NettyLog.tag, "消息发送出错：" + message, e);
         }
     }
-    /**
-     * 发送信息
-     *
-     * @param message
-     */
-    public void sendMessage(byte[] message) {
-        try {
 
-                NettyLog.e("重新发送：" + message);
-                channel.writeAndFlush(Unpooled.copiedBuffer(message)).sync();
-
-
-        } catch (Exception e) {
-            NettyLog.e(NettyLog.tag, "重发消息出错：" + message, e);
-        }
-    }
 
     ChannelFutureListener channelFutureListener = new ChannelFutureListener() {
         public void operationComplete(ChannelFuture f) throws Exception {
@@ -147,12 +133,9 @@ public class NettyClient {
                 NettyLog.e("接服务器成功");
                 isConnections = false;
                 if (listener != null) listener.onConnectSuccess();
-                Iterator<byte[]> it = mCachedRequestList.iterator();
-                while (it.hasNext()) {
-                    byte[] msg = it.next();
-                    it.remove();
-                    send(msg);
-                }
+                mayInterruptIfRunning = false;
+                if (future !=null)
+                future.cancel(mayInterruptIfRunning);
             } else {
                 loopConnect(f.channel(), new Exception("网络不稳定，和服务器连接中断！"));
             }
@@ -168,9 +151,10 @@ public class NettyClient {
     protected synchronized void loopConnect(final Channel channel, Exception e) {
         if(!isConnections)return;
         isConnections = false;
+
         NettyLog.e("与服务器 " + HOST + ":" + PORT + " 断开连接, " + reConnectTime + " 秒后 "+ channel.id()+" 重连！");
         if (listener != null) listener.onConnectError(e);
-        channel.eventLoop().schedule(new Runnable() {
+        future =channel.eventLoop().scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
                 if (!isConnections && !channel.isActive()) {
@@ -178,7 +162,9 @@ public class NettyClient {
                     NettyClient.getInstance().connect();
                 }
             }
-        }, reConnectTime, TimeUnit.SECONDS);
+        }, reConnectTime, reConnectTime,TimeUnit.SECONDS);
+
+
     }
 
 }

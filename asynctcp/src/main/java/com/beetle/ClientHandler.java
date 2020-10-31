@@ -34,7 +34,13 @@ public class ClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
         byte[] array = new byte[length];
         byteBuf.getBytes(byteBuf.readerIndex(), array);
         NettyEventListener listener = NettyClient.getInstance().listener;
-        if (listener != null) listener.onEventMessage(array);
+            if (listener != null) {
+                int s=array[8];
+                if (s!=14){
+                    listener.onEventMessage(array);
+                }
+
+            }
         NettyLog.e("收到信息：" + Arrays.toString(array));
         }
     }
