@@ -2,7 +2,7 @@ package com.beetle;
 
 
 import java.util.concurrent.TimeUnit;
-
+import java.util.Iterator;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -13,7 +13,7 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
-
+import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * Netty客户端
  * Created by hais1992 on 2016/7/5/005.
@@ -22,9 +22,9 @@ public class NettyClient {
     protected static final String endFlag = "Δ";        //结束符号
     protected static final String keepaliveFlag = "➹";  //心跳过滤符号
     protected static int reConnectTime = 10;        //重连间隔
-    protected static int readerIdleTime = 15;       //读取超时
-    protected static int writerIdleTime = 15;       //写入超时
-    protected static int allIdleTime = 5;          //全部超时
+    protected static int readerIdleTime = 45;       //读取超时
+    protected static int writerIdleTime = 45;       //写入超时
+    protected static int allIdleTime = 30;          //全部超时
 
     private ChannelFuture channelFuture;
     private Channel channel;
@@ -35,7 +35,7 @@ public class NettyClient {
     private int PORT;
     protected NettyEventListener listener;
     private static NettyClient NETTY_CLIENT;
-
+    private CopyOnWriteArrayList<byte[]> mCachedRequestList = new CopyOnWriteArrayList();
     protected static NettyClient getInstance() {
         return NETTY_CLIENT;
     }
@@ -110,15 +110,36 @@ public class NettyClient {
      */
     public void send(byte[] message) {
         try {
-            if (channel == null) NettyLog.e("您未建立 Socket 通道，请调用connect进行建立！");
-            NettyLog.e("发送：" + message);
+            if (channel == null) {
+                NettyLog.e("未建立 Socket 通道,执行连接任务-" + "连接服务器...");
+                NettyClient.getInstance().connect();
+                mCachedRequestList.add(message);
 
-            channel.writeAndFlush(Unpooled.copiedBuffer(message)).sync();
+            }else {
+                NettyLog.e("发送：" + message);
+                channel.writeAndFlush(Unpooled.copiedBuffer(message)).sync();
+            }
+
         } catch (Exception e) {
             NettyLog.e(NettyLog.tag, "消息发送出错：" + message, e);
         }
     }
+    /**
+     * 发送信息
+     *
+     * @param message
+     */
+    public void sendMessage(byte[] message) {
+        try {
 
+                NettyLog.e("重新发送：" + message);
+                channel.writeAndFlush(Unpooled.copiedBuffer(message)).sync();
+
+
+        } catch (Exception e) {
+            NettyLog.e(NettyLog.tag, "重发消息出错：" + message, e);
+        }
+    }
 
     ChannelFutureListener channelFutureListener = new ChannelFutureListener() {
         public void operationComplete(ChannelFuture f) throws Exception {
@@ -126,6 +147,12 @@ public class NettyClient {
                 NettyLog.e("接服务器成功");
                 isConnections = false;
                 if (listener != null) listener.onConnectSuccess();
+                Iterator<byte[]> it = mCachedRequestList.iterator();
+                while (it.hasNext()) {
+                    byte[] msg = it.next();
+                    it.remove();
+                    send(msg);
+                }
             } else {
                 loopConnect(f.channel(), new Exception("网络不稳定，和服务器连接中断！"));
             }
