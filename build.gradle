@@ -1,57 +1,24 @@
-apply plugin: 'com.android.library'
-
-
-apply plugin: 'maven'
-
-uploadArchives {
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+buildscript {
     repositories {
-        mavenDeployer {
-            repository(url: "file://localhost/$rootDir/repo/")
-            pom.version = '1.0'
-            pom.artifactId = 'asynctcp'
-            pom.groupId = "com.beetle"
-        }
+        google()
+        jcenter()
+    }
+    dependencies {
+        classpath "com.android.tools.build:gradle:4.1.0"
+
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
     }
 }
 
-task androidSourcesJar(type: Jar) {
-    classifier = 'sources'
-    from android.sourceSets.main.java.sourceFiles
-}
-
-artifacts {
-    archives androidSourcesJar
-}
-
-android {
-    compileSdkVersion 28
-    buildToolsVersion '28.0.3'
-
-    defaultConfig {
-        minSdkVersion 9
-        targetSdkVersion 24
-    }
-
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_6
-        targetCompatibility JavaVersion.VERSION_1_6
-    }
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
-    }
-
-
-    sourceSets {
-        main {
-            jniLibs.srcDirs = ['libs']
-        }
+allprojects {
+    repositories {
+        google()
+        jcenter()
     }
 }
 
-dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation files('libs\\netty-all-4.1.4.Final.jar')
+task clean(type: Delete) {
+    delete rootProject.buildDir
 }

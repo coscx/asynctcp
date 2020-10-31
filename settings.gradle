@@ -1,0 +1,3 @@
+include ':asynctcp'
+include ':app'
+rootProject.name = "imasynctcp"

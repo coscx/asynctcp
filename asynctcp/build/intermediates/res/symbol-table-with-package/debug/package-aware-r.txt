@@ -1,0 +1,3 @@
+com.beetle.asynctcp
+drawable ic_launcher
+string app_name
