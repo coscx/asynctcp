@@ -23,9 +23,9 @@ public class NettyClient {
     protected static final String endFlag = "Δ";        //结束符号
     protected static final String keepaliveFlag = "➹";  //心跳过滤符号
     protected static int reConnectTime = 10;        //重连间隔
-    protected static int readerIdleTime = 15;       //读取超时
-    protected static int writerIdleTime = 15;       //写入超时
-    protected static int allIdleTime = 5;          //全部超时
+    protected static int readerIdleTime = 30;       //读取超时
+    protected static int writerIdleTime = 30;       //写入超时
+    protected static int allIdleTime = 25;          //全部超时
     private   boolean mayInterruptIfRunning = false;
     private ChannelFuture channelFuture;
     private Channel channel;
