@@ -50,9 +50,9 @@ public class AsyncTCP implements NettyEventListener , AsyncTCPInterface{
     };
   
 
-    static {
-        System.loadLibrary("async_tcp");
-    }
+    //static {
+        //System.loadLibrary("async_tcp");
+    //}
 
     @Override
     public void onConnectSuccess() {
