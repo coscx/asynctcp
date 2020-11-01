@@ -15,13 +15,13 @@ public class ClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-//        super.channelInactive(ctx);
+        super.channelInactive(ctx);
         NettyClient.getInstance().loopConnect(ctx.channel(), new Exception("网络不稳定，和服务器连接失败！"));
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-//        super.exceptionCaught(ctx, cause);
+        super.exceptionCaught(ctx, cause);
         NettyClient.getInstance().isConnections = true; //-.-Bug？
         NettyClient.getInstance().loopConnect(ctx.channel(),new Exception("网络不稳定，和服务器连接中断！"));
     }
@@ -41,7 +41,7 @@ public class ClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
                 }
 
             }
-        NettyLog.e("收到信息：" + Arrays.toString(array));
+        NettyLog.e("收到信息：" + new String(array,"UTF-8"));
         }
     }
 }

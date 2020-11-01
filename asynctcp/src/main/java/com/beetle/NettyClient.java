@@ -23,9 +23,9 @@ public class NettyClient {
     protected static final String endFlag = "Δ";        //结束符号
     protected static final String keepaliveFlag = "➹";  //心跳过滤符号
     protected static int reConnectTime = 10;        //重连间隔
-    protected static int readerIdleTime = 45;       //读取超时
-    protected static int writerIdleTime = 45;       //写入超时
-    protected static int allIdleTime = 30;          //全部超时
+    protected static int readerIdleTime = 15;       //读取超时
+    protected static int writerIdleTime = 15;       //写入超时
+    protected static int allIdleTime = 5;          //全部超时
     private   boolean mayInterruptIfRunning = false;
     private ChannelFuture channelFuture;
     private Channel channel;
@@ -35,7 +35,7 @@ public class NettyClient {
     private String HOST;
     private int PORT;
     protected NettyEventListener listener;
-    private ScheduledFuture<?> future;
+    private static ScheduledFuture<?> future;
     private static NettyClient NETTY_CLIENT;
     private CopyOnWriteArrayList<byte[]> mCachedRequestList = new CopyOnWriteArrayList();
     protected static NettyClient getInstance() {
@@ -115,7 +115,7 @@ public class NettyClient {
             if (channel == null) {
                 NettyLog.e("未建立 Socket 通道,执行连接任务-" + "连接服务器...");
                 NettyClient.getInstance().connect();
-                mCachedRequestList.add(message);
+                //mCachedRequestList.add(message);
 
             }
             NettyLog.e("发送：" + message);
@@ -154,15 +154,19 @@ public class NettyClient {
 
         NettyLog.e("与服务器 " + HOST + ":" + PORT + " 断开连接, " + reConnectTime + " 秒后 "+ channel.id()+" 重连！");
         if (listener != null) listener.onConnectError(e);
-        future =channel.eventLoop().scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                if (!isConnections && !channel.isActive()) {
-                    NettyLog.e("重连任务" + channel.id() + "正在重连服务器。");
-                    NettyClient.getInstance().connect();
+        if (future == null){
+            future =channel.eventLoop().scheduleAtFixedRate(new Runnable() {
+                @Override
+                public void run() {
+                    if (!isConnections && !channel.isActive()) {
+                        NettyLog.e("重连任务" + channel.id() + "正在重连服务器。");
+                        NettyClient.getInstance().connect();
+                    }
                 }
-            }
-        }, reConnectTime, reConnectTime,TimeUnit.SECONDS);
+            }, reConnectTime, reConnectTime,TimeUnit.SECONDS);
+
+        }
+
 
 
     }
