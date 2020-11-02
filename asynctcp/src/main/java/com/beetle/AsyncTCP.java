@@ -9,16 +9,20 @@
 
 
 package com.beetle;
+import android.util.Log;
+
 import java.io.UnsupportedEncodingException;
 
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 
-public class AsyncTCP implements NettyEventListener , AsyncTCPInterface{
+
+public class AsyncTCP implements  AsyncTCPInterface{
     private int sock;
     private int events;
-    NettyClient nettyClient;
+    NettyClient mNettyClient;
     private byte[] data;
     private boolean connecting;
-    
     private TCPConnectCallback connectCallback;
     private TCPReadCallback readCallback;
     private long self;
@@ -33,45 +37,70 @@ public class AsyncTCP implements NettyEventListener , AsyncTCPInterface{
 	readCallback = cb;
     }
     public  boolean connect(String host, int port){
-        this.nettyClient = new NettyClient(host, port,this);
-        nettyClient.connect();
+        connectNettyServer(host, port);
         return true;
     }
     public  void close(){
-        this.nettyClient.closeAll();
+        this.mNettyClient.disconnect();
     };
 
     public  void writeData(byte[] bytes)  {
-        this.nettyClient.send(bytes);
+
+        mNettyClient.sendMsgToServer(bytes, new ChannelFutureListener() {
+            @Override
+            public void operationComplete(ChannelFuture channelFuture) throws Exception {
+                if (channelFuture.isSuccess()) {                //4
+                    NettyLog.i( "Write auth successful");
+                } else {
+                    NettyLog.i( "Write auth error");
+                }
+            }
+        });
     };
     
     public  void startRead(){
 
     };
-  
 
-    //static {
-        //System.loadLibrary("async_tcp");
-    //}
 
-    @Override
-    public void onConnectSuccess() {
-        connectCallback.onConnect(this,0);
+    /**
+     * 连接Netty 服务端
+     *
+     * @param host 服务端地址
+     * @param port 服务端端口 默认两端约定一致
+     */
+    private void connectNettyServer(String host, int port) {
+
+        mNettyClient = new NettyClient(host, port);
+
+        NettyLog.i("connectNettyServer");
+        if (!mNettyClient.getConnectStatus()) {
+            mNettyClient.setListener(new NettyListener() {
+                @Override
+                public void onMessageResponse(byte[] msg) {
+                    NettyLog.i("onMessageResponse:" + msg);
+                    /**
+                     *   接收服务端发送过来的 json数据解析
+                     */
+                    // TODO: 2018/6/1  do something
+                    // QueueShowBean    queueShowBean = JSONObject.parseObject((String) msg, QueueShowBean.class);
+                    readCallback.onRead(this,msg);
+
+                }
+
+                @Override
+                public void onServiceStatusConnectChanged(int statusCode) {
+                    /**
+                     * 回调执行还在子线程中
+                     */
+                    connectCallback.onConnect(this,0);
+
+                }
+            });
+
+            mNettyClient.connect();//连接服务器
+        }
     }
 
-    @Override
-    public void onConnections() {
 
-    }
-
-    @Override
-    public void onConnectError(Exception e) {
-        connectCallback.onConnect(this,3);
-    }
-
-    @Override
-    public void onEventMessage(byte[] s) {
-
-        readCallback.onRead(this,s);
-    }
 }

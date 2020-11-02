@@ -1,174 +1,211 @@
 package com.beetle;
 
+import android.os.SystemClock;
+import android.util.Log;
 
 import java.util.concurrent.TimeUnit;
-import java.util.Iterator;
+
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.util.concurrent.ScheduledFuture;
-import java.util.concurrent.CopyOnWriteArrayList;
-/**
- * Netty客户端
- * Created by hais1992 on 2016/7/5/005.
- */
+import io.netty.handler.codec.LineBasedFrameDecoder;
+import io.netty.handler.codec.string.StringDecoder;
+import io.netty.handler.codec.string.StringEncoder;
+import io.netty.handler.timeout.IdleStateHandler;
+import io.netty.util.CharsetUtil;
+
+
 public class NettyClient {
-    protected static final String endFlag = "Δ";        //结束符号
-    protected static final String keepaliveFlag = "➹";  //心跳过滤符号
-    protected static int reConnectTime = 10;        //重连间隔
-    protected static int readerIdleTime = 25;       //读取超时
-    protected static int writerIdleTime = 25;       //写入超时
-    protected static int allIdleTime = 13;          //全部超时
-    private   boolean mayInterruptIfRunning = false;
-    private ChannelFuture channelFuture;
+    private static final String TAG = "NettyClient";
+
+    private EventLoopGroup group;
+
+    private NettyListener listener;
+
     private Channel channel;
-    private Bootstrap bootstrap;
-    private EventLoopGroup eventLoopGroup;
-    protected boolean isConnections = false;    //是否正在连接中.
-    private String HOST;
-    private int PORT;
-    protected NettyEventListener listener;
-    private static ScheduledFuture<?> future;
-    private static NettyClient NETTY_CLIENT;
-    private CopyOnWriteArrayList<byte[]> mCachedRequestList = new CopyOnWriteArrayList();
-    protected static NettyClient getInstance() {
-        return NETTY_CLIENT;
+
+    private boolean isConnect = false;
+
+    private static int reconnectNum = Integer.MAX_VALUE;
+    private static final int readTimeOut = 60*2;
+    private static final int writerTimeOut = 60*2;
+    private static final int allTimeOut = 45*2;
+    private boolean isNeedReconnect = true;
+    private boolean isConnecting = false;
+
+    private long reconnectIntervalTime = 5000;
+    private static final Integer CONNECT_TIMEOUT_MILLIS = 5000;
+
+    public String host;
+    public int tcp_port;
+
+//    private ScheduledExecutorService mScheduledExecutorService;
+
+    public NettyClient(String host, int tcp_port) {
+        this.host = host;
+        this.tcp_port = tcp_port;
     }
 
-    /**
-     * 建立一个 Netty 客户端
-     *
-     * @param host     IP地址
-     * @param port     端口
-     * @param listener 监听器
-     */
-    public NettyClient(String host, int port, NettyEventListener listener) {
-        HOST = host;
-        PORT = port;
-        NETTY_CLIENT = this;
-        this.listener = listener;
-    }
+    public void connect() {
 
-    private void initNettyClient() {
-        eventLoopGroup = new NioEventLoopGroup();
-        bootstrap = new Bootstrap();
-        bootstrap.group(eventLoopGroup);
-        bootstrap.channel(NioSocketChannel.class);
-        bootstrap.handler(new ClientInitializer());
-        //设置TCP协议的属性
-        bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
-        bootstrap.option(ChannelOption.TCP_NODELAY, true);
-//        bootstrap.option(ChannelOption.SO_REUSEADDR, true);
-//        bootstrap.option(ChannelOption.TCP_NODELAY, true);
-//        bootstrap.option(ChannelOption.SO_BACKLOG, 10000);
-//        bootstrap.option(ChannelOption.SO_RCVBUF, 1024);
-//        bootstrap.option(ChannelOption.SO_SNDBUF, 1024);
-//        bootstrap.option(ChannelOption.SO_TIMEOUT, 5000);
-//        bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000);
-    }
-
-    /**
-     * 开始连接服务器
-     *
-     * @return
-     */
-    public NettyClient connect() {
-        if (listener != null) listener.onConnections();
-        if (channel != null) channel.close();
-        else initNettyClient();
-        try {
-            isConnections = true;
-            channelFuture = bootstrap.connect(HOST, PORT);
-            channelFuture.addListener(channelFutureListener);
-            channel = channelFuture.sync().channel();
-            NettyLog.e("建立 Socket 通道：" + HOST + ":" + PORT);
-        } catch (Exception e) {
-            NettyLog.e(NettyLog.tag, "Socket通道建立出错：" + HOST + ":" + PORT, e);
-            loopConnect(channelFuture.channel(), e);
+        if (isConnecting) {
+            return;
         }
-        return this;
-    }
-
-    /**
-     * 关闭 连接 通道
-     */
-    public void closeAll() {
-        if (channel != null) channel.close();
-        channel = null;
-//        eventLoopGroup.shutdownGracefully();
-    }
-
-    /**
-     * 发送信息
-     *
-     * @param message
-     */
-    public void send(byte[] message) {
-        try {
-            if (channel == null) {
-                NettyLog.e("未建立 Socket 通道,执行连接任务-" + "连接服务器...");
-                NettyClient.getInstance().connect();
-                //mCachedRequestList.add(message);
-
+        Thread clientThread = new Thread("client-Netty") {
+            @Override
+            public void run() {
+                super.run();
+                isNeedReconnect = true;
+                reconnectNum = Integer.MAX_VALUE;
+                connectServer();
             }
-            NettyLog.e("发送：" + message);
-            channel.writeAndFlush(Unpooled.copiedBuffer(message)).sync();
-
-        } catch (Exception e) {
-            NettyLog.e(NettyLog.tag, "消息发送出错：" + message, e);
-        }
+        };
+        clientThread.start();
     }
 
 
-    ChannelFutureListener channelFutureListener = new ChannelFutureListener() {
-        public void operationComplete(ChannelFuture f) throws Exception {
-            if (f.isSuccess()) {
-                NettyLog.e("接服务器成功");
-                isConnections = false;
-                if (listener != null) listener.onConnectSuccess();
-                mayInterruptIfRunning = false;
-                if (future !=null)
-                future.cancel(mayInterruptIfRunning);
-            } else {
-                loopConnect(f.channel(), new Exception("网络不稳定，和服务器连接中断！"));
-            }
-        }
-    };
+        private void connectServer() {
+        synchronized (NettyClient.this) {
+            ChannelFuture channelFuture = null;
+            if (!isConnect) {
+                isConnecting = true;
+                group = new NioEventLoopGroup();
+                Bootstrap bootstrap = new Bootstrap().group(group)
+                        .option(ChannelOption.TCP_NODELAY, true)//屏蔽Nagle算法试图
+                        .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
+                        .channel(NioSocketChannel.class)
+                        .handler(new ChannelInitializer<SocketChannel>() { // 5
+                            @Override
+                            public void initChannel(SocketChannel ch) throws Exception {
+                                ch.pipeline().addLast("ping", new IdleStateHandler(readTimeOut, writerTimeOut, allTimeOut, TimeUnit.SECONDS));//5s未发送数据，回调userEventTriggered
+                                //ch.pipeline().addLast(new LineBasedFrameDecoder(1024));//黏包处理
+                                ch.pipeline().addLast(new NettyClientHandler(listener));
+                            }
+                        });
 
-    /**
-     * 重连 逻辑
-     *
-     * @param channel
-     * @param e
-     */
-    protected synchronized void loopConnect(final Channel channel, Exception e) {
-        if(!isConnections)return;
-        isConnections = false;
+                try {
 
-        NettyLog.e("与服务器 " + HOST + ":" + PORT + " 断开连接, " + reConnectTime + " 秒后 "+ channel.id()+" 重连！");
-        if (listener != null) listener.onConnectError(e);
-        if (future == null){
-            future =channel.eventLoop().scheduleAtFixedRate(new Runnable() {
-                @Override
-                public void run() {
-                    if (!isConnections && !channel.isActive()) {
-                        NettyLog.e("重连任务" + channel.id() + "正在重连服务器。");
-                        NettyClient.getInstance().connect();
+
+                    channelFuture = bootstrap.connect(host, tcp_port).addListener(new ChannelFutureListener() {
+                        @Override
+                        public void operationComplete(ChannelFuture channelFuture) throws Exception {
+                            if (channelFuture.isSuccess()) {
+                                Log.e(TAG, "连接成功");
+                                isConnect = true;
+                                channel = channelFuture.channel();
+                            } else {
+                                Log.e(TAG, "连接失败");
+                                isConnect = false;
+                            }
+                            isConnecting = false;
+                        }
+                    }).sync();
+
+
+                    // Wait until the connection is closed.
+                    channelFuture.channel().closeFuture().sync();
+                    Log.e(TAG, " 断开连接");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    isConnect = false;
+                    listener.onServiceStatusConnectChanged(NettyListener.STATUS_CONNECT_CLOSED);
+                    if (null != channelFuture) {
+                        if (channelFuture.channel() != null && channelFuture.channel().isOpen()) {
+                            channelFuture.channel().close();
+                        }
                     }
+                    group.shutdownGracefully();
+                    reconnect();
                 }
-            }, reConnectTime, reConnectTime,TimeUnit.SECONDS);
+            }
+        }
+    }
+
+
+    public void disconnect() {
+        Log.e(TAG, "disconnect");
+        isNeedReconnect = false;
+        if (group !=null)
+        group.shutdownGracefully();
+    }
+
+    public void reconnect() {
+
+        if (isNeedReconnect && reconnectNum > 0 && !isConnect) {
+            Log.e(TAG, "reconnect");
+            reconnectNum--;
+            SystemClock.sleep(reconnectIntervalTime);
+            if (isNeedReconnect && reconnectNum > 0 && !isConnect) {
+                Log.e(TAG, "重新连接");
+                connectServer();
+            }
+        }
+    }
+
+    public boolean sendMsgToServer(Object object, ChannelFutureListener listener) {
+        boolean flag = channel != null && isConnect;
+        if (flag) {
+//			ByteBuf buf = Unpooled.copiedBuffer(data);
+//            ByteBuf byteBuf = Unpooled.copiedBuffer(data + System.getProperty("line.separator"), //2
+//                    CharsetUtil.UTF_8);
+            channel.writeAndFlush(object).addListener(listener);
 
         }
+        return flag;
+    }
 
+    public boolean sendMsgToServer(String data, ChannelFutureListener listener) {
+        boolean flag = channel != null && isConnect;
+        if (flag) {
+//			ByteBuf buf = Unpooled.copiedBuffer(data);
+//            ByteBuf byteBuf = Unpooled.copiedBuffer(data + System.getProperty("line.separator"), //2
+//                    CharsetUtil.UTF_8);
+            channel.writeAndFlush(data + System.getProperty("line.separator")).addListener(listener);
+        }
+        return flag;
+    }
 
+    public boolean sendMsgToServer(byte[] data, ChannelFutureListener listener) {
+        boolean flag = channel != null && isConnect;
+        if (flag) {
+            ByteBuf buf = Unpooled.copiedBuffer(data);
+            channel.writeAndFlush(buf).addListener(listener);
+        }
+        return flag;
+    }
 
+    public void setReconnectNum(int reconnectNum) {
+        this.reconnectNum = reconnectNum;
+    }
+
+    public void setReconnectIntervalTime(long reconnectIntervalTime) {
+        this.reconnectIntervalTime = reconnectIntervalTime;
+    }
+
+    public boolean getConnectStatus() {
+        return isConnect;
+    }
+
+    public boolean isConnecting() {
+        return isConnecting;
+    }
+
+    public void setConnectStatus(boolean status) {
+        this.isConnect = status;
+    }
+
+    public void setListener(NettyListener listener) {
+        this.listener = listener;
     }
 
 }
