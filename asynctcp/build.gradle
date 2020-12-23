@@ -53,5 +53,4 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation files('libs\\netty-all-4.1.4.Final.jar')
 }

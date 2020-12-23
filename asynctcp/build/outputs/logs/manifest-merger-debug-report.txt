@@ -1,25 +1,25 @@
 -- Merging decision tree log ---
 manifest
-ADDED from C:\im_android\asynctcp\src\main\AndroidManifest.xml:2:1-5:12
-INJECTED from C:\im_android\asynctcp\src\main\AndroidManifest.xml:2:1-5:12
-INJECTED from C:\im_android\asynctcp\src\main\AndroidManifest.xml:2:1-5:12
+ADDED from C:\asynctcp\asynctcp\src\main\AndroidManifest.xml:2:1-5:12
+INJECTED from C:\asynctcp\asynctcp\src\main\AndroidManifest.xml:2:1-5:12
+INJECTED from C:\asynctcp\asynctcp\src\main\AndroidManifest.xml:2:1-5:12
 	package
-		ADDED from C:\im_android\asynctcp\src\main\AndroidManifest.xml:2:70-99
-		INJECTED from C:\im_android\asynctcp\src\main\AndroidManifest.xml
-		INJECTED from C:\im_android\asynctcp\src\main\AndroidManifest.xml
+		ADDED from C:\asynctcp\asynctcp\src\main\AndroidManifest.xml:2:70-99
+		INJECTED from C:\asynctcp\asynctcp\src\main\AndroidManifest.xml
+		INJECTED from C:\asynctcp\asynctcp\src\main\AndroidManifest.xml
 	xmlns:android
-		ADDED from C:\im_android\asynctcp\src\main\AndroidManifest.xml:2:11-69
+		ADDED from C:\asynctcp\asynctcp\src\main\AndroidManifest.xml:2:11-69
 uses-sdk
-INJECTED from C:\im_android\asynctcp\src\main\AndroidManifest.xml reason: use-sdk injection requested
-INJECTED from C:\im_android\asynctcp\src\main\AndroidManifest.xml
-INJECTED from C:\im_android\asynctcp\src\main\AndroidManifest.xml
-INJECTED from C:\im_android\asynctcp\src\main\AndroidManifest.xml
-INJECTED from C:\im_android\asynctcp\src\main\AndroidManifest.xml
+INJECTED from C:\asynctcp\asynctcp\src\main\AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from C:\asynctcp\asynctcp\src\main\AndroidManifest.xml
+INJECTED from C:\asynctcp\asynctcp\src\main\AndroidManifest.xml
+INJECTED from C:\asynctcp\asynctcp\src\main\AndroidManifest.xml
+INJECTED from C:\asynctcp\asynctcp\src\main\AndroidManifest.xml
 	android:targetSdkVersion
-		INJECTED from C:\im_android\asynctcp\src\main\AndroidManifest.xml
-		ADDED from C:\im_android\asynctcp\src\main\AndroidManifest.xml
-		INJECTED from C:\im_android\asynctcp\src\main\AndroidManifest.xml
+		INJECTED from C:\asynctcp\asynctcp\src\main\AndroidManifest.xml
+		ADDED from C:\asynctcp\asynctcp\src\main\AndroidManifest.xml
+		INJECTED from C:\asynctcp\asynctcp\src\main\AndroidManifest.xml
 	android:minSdkVersion
-		INJECTED from C:\im_android\asynctcp\src\main\AndroidManifest.xml
-		ADDED from C:\im_android\asynctcp\src\main\AndroidManifest.xml
-		INJECTED from C:\im_android\asynctcp\src\main\AndroidManifest.xml
+		INJECTED from C:\asynctcp\asynctcp\src\main\AndroidManifest.xml
+		ADDED from C:\asynctcp\asynctcp\src\main\AndroidManifest.xml
+		INJECTED from C:\asynctcp\asynctcp\src\main\AndroidManifest.xml
