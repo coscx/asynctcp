@@ -41,6 +41,7 @@ public class AsyncTCP implements  AsyncTCPInterface{
         return true;
     }
     public  void close(){
+        if(this.mNettyClient !=null)
         this.mNettyClient.disconnect();
     };
 
