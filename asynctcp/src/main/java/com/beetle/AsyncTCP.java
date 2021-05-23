@@ -9,6 +9,7 @@
 
 
 package com.beetle;
+import android.content.Context;
 import android.util.Log;
 
 import java.io.UnsupportedEncodingException;
@@ -26,22 +27,29 @@ public class AsyncTCP implements  AsyncTCPInterface{
     private TCPConnectCallback connectCallback;
     private TCPReadCallback readCallback;
     private long self;
+    private Context context;
     public void AsyncTCP(){
 
     }
-
+    public void setContext(Context context) {
+        context = context;
+    }
     public void setConnectCallback(TCPConnectCallback cb) {
-	connectCallback = cb;
+        connectCallback = cb;
     }
     public void setReadCallback(TCPReadCallback cb) {
-	readCallback = cb;
+        readCallback = cb;
     }
     public  boolean connect(String host, int port){
         connectNettyServer(host, port);
         return true;
     }
+    public  boolean connect(String host, int port,Context context){
+        this.context =context;
+        connectNettyServer(host, port);
+        return true;
+    }
     public  void close(){
-        if(this.mNettyClient !=null)
         this.mNettyClient.disconnect();
     };
 
@@ -51,14 +59,14 @@ public class AsyncTCP implements  AsyncTCPInterface{
             @Override
             public void operationComplete(ChannelFuture channelFuture) throws Exception {
                 if (channelFuture.isSuccess()) {                //4
-                    NettyLog.i( "Write auth successful");
+                    NettyLog.i( "Send data successful");
                 } else {
-                    NettyLog.i( "Write auth error");
+                    NettyLog.i( "Send data error");
                 }
             }
         });
     };
-    
+
     public  void startRead(){
 
     };
@@ -79,7 +87,7 @@ public class AsyncTCP implements  AsyncTCPInterface{
             mNettyClient.setListener(new NettyListener() {
                 @Override
                 public void onMessageResponse(byte[] msg) {
-                    NettyLog.i("onMessageResponse:" + msg);
+                    NettyLog.i("onMessageResponse:");
                     /**
                      *   接收服务端发送过来的 json数据解析
                      */
