@@ -63,16 +63,16 @@ public class NettyClient {
     public SSLContext createSSLContext(Context context) {
         SSLContext sslContext = null;
         try {
-            String keyPassword = "";
+            String keyPassword = "wan111111";
 
             // key store manager
-//            KeyStore keyStore = KeyStore.getInstance("PKCS12");
-//            InputStream keyInput = context.getResources().getAssets().open("");
-//            keyStore.load(keyInput, keyPassword.toCharArray());
-//            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-//            keyManagerFactory.init(keyStore, keyPassword.toCharArray());
-//             keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-//            keyManagerFactory.init(keyStore, keyPassword.toCharArray());
+            KeyStore keyStore = KeyStore.getInstance("PKCS12");
+            InputStream keyInput = context.getResources().getAssets().open("test.p12");
+            keyStore.load(keyInput, keyPassword.toCharArray());
+            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            keyManagerFactory.init(keyStore, keyPassword.toCharArray());
+            keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            keyManagerFactory.init(keyStore, keyPassword.toCharArray());
 
             // trust store manager
             CertificateFactory cf = CertificateFactory.getInstance("X509");
@@ -91,8 +91,8 @@ public class NettyClient {
 
             // assemble
             sslContext = SSLContext.getInstance("TLS");
-            sslContext.init(null, trustManagerFactory.getTrustManagers(), null);
-            //sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), null);
+            //sslContext.init(null, trustManagerFactory.getTrustManagers(), null);
+            sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), null);
         } catch (Exception e) {
             e.printStackTrace();
         }
