@@ -30,7 +30,7 @@ public class NettyClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
         if (evt instanceof IdleStateEvent) {
             IdleStateEvent event = (IdleStateEvent) evt;
             if (event.state() == IdleState.WRITER_IDLE) {
-                NettyLog.e("发送心跳：");
+                NettyLog.e("send heart");
                 Message msg = new Message();
                 msg.cmd = Command.MSG_PING;
                 msg.seq = 0;

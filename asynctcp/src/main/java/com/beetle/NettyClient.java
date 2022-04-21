@@ -243,7 +243,7 @@ public class NettyClient {
     }
 
     public void setReconnectNum(int reconnectNum) {
-        this.reconnectNum = reconnectNum;
+        NettyClient.reconnectNum = reconnectNum;
     }
 
     public void setReconnectIntervalTime(long reconnectIntervalTime) {

@@ -42,8 +42,11 @@ public class AsyncSSLTCP implements AsyncTCPInterface {
     };
 
     public  void writeData(byte[] bytes)  {
-
-        mNettyClient.sendMsgToServer(bytes, new ChannelFutureListener() {
+         if(this.mNettyClient ==null){
+             NettyLog.e( "mNettyClient is null");
+             return;
+         }
+        this.mNettyClient.sendMsgToServer(bytes, new ChannelFutureListener() {
             @Override
             public void operationComplete(ChannelFuture channelFuture) throws Exception {
                 if (channelFuture.isSuccess()) {                //4
@@ -68,11 +71,11 @@ public class AsyncSSLTCP implements AsyncTCPInterface {
      */
     private void connectNettyServer(String host, int port) {
 
-        mNettyClient = new NettyClient(host, port,this.context);
+        this.mNettyClient = new NettyClient(host, port,this.context);
 
         NettyLog.i("connectNettyServer");
-        if (!mNettyClient.getConnectStatus()) {
-            mNettyClient.setListener(new NettyListener() {
+        if (!this.mNettyClient.getConnectStatus()) {
+            this.mNettyClient.setListener(new NettyListener() {
                 @Override
                 public void onMessageResponse(byte[] msg) {
                     NettyLog.i("onMessageResponse <-");
@@ -95,7 +98,7 @@ public class AsyncSSLTCP implements AsyncTCPInterface {
                 }
             });
 
-            mNettyClient.connect();//连接服务器
+            this.mNettyClient.connect();//连接服务器
         }
     }
 }
