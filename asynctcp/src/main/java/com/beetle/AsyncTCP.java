@@ -28,11 +28,9 @@ public class AsyncTCP implements  AsyncTCPInterface{
     private TCPReadCallback readCallback;
     private long self;
     private Context context;
-    public void AsyncTCP(){
-
-    }
+    public AsyncTCP(){ }
     public void setContext(Context context) {
-        context = context;
+        this.context = context;
     }
     public void setConnectCallback(TCPConnectCallback cb) {
         connectCallback = cb;

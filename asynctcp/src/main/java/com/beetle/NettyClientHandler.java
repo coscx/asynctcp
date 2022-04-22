@@ -13,7 +13,7 @@ import io.netty.handler.timeout.IdleStateEvent;
 public class NettyClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
     private static final String TAG = "NettyClientHandler";
-    private NettyListener listener;
+    private final NettyListener listener;
 
 //    private static final ByteBuf HEARTBEAT_SEQUENCE = Unpooled.unreleasableBuffer(Unpooled.copiedBuffer("Heartbeat"+System.getProperty("line.separator"),
 //            CharsetUtil.UTF_8));
@@ -30,7 +30,7 @@ public class NettyClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
         if (evt instanceof IdleStateEvent) {
             IdleStateEvent event = (IdleStateEvent) evt;
             if (event.state() == IdleState.WRITER_IDLE) {
-                NettyLog.e("send heart");
+                NettyLog.i("send heart");
                 Message msg = new Message();
                 msg.cmd = Command.MSG_PING;
                 msg.seq = 0;
@@ -52,14 +52,14 @@ public class NettyClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
      */
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        Log.e(TAG, "channelActive");
+        Log.i(TAG, "channelActive");
 //        NettyClient.getInstance().setConnectStatus(true);
         listener.onServiceStatusConnectChanged(NettyListener.STATUS_CONNECT_SUCCESS);
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        Log.e(TAG, "channelInactive");
+        Log.i(TAG, "channelInactive");
 //        NettyClient.getInstance().setConnectStatus(false);
 //        listener.onServiceStatusConnectChanged(NettyListener.STATUS_CONNECT_CLOSED);
        // NettyClient.getInstance().reconnect();
@@ -74,7 +74,7 @@ public class NettyClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
      */
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, ByteBuf byteBuf) throws Exception {
-        Log.e(TAG, "channelRead0");
+        Log.i(TAG, "channelRead0");
         if (byteBuf.hasArray()) {
             int length = byteBuf.readableBytes();
             byte[] array = new byte[length];

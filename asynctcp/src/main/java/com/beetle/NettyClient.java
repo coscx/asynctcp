@@ -157,7 +157,7 @@ public class NettyClient {
                         @Override
                         public void operationComplete(ChannelFuture channelFuture) throws Exception {
                             if (channelFuture.isSuccess()) {
-                                Log.e(TAG, "connect success");
+                                Log.i(TAG, "connect success");
                                 isConnect = true;
                                 channel = channelFuture.channel();
                             } else {
@@ -171,7 +171,7 @@ public class NettyClient {
 
                     // Wait until the connection is closed.
                     channelFuture.channel().closeFuture().sync();
-                    Log.e(TAG, " socket disconnect");
+                    Log.i(TAG, " socket disconnect");
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {
@@ -191,7 +191,7 @@ public class NettyClient {
 
 
     public void disconnect() {
-        Log.e(TAG, "disconnect");
+        Log.i(TAG, "disconnect");
         isNeedReconnect = false;
         if (group !=null)
             group.shutdownGracefully();
@@ -200,11 +200,11 @@ public class NettyClient {
     public void reconnect() {
 
         if (isNeedReconnect && reconnectNum > 0 && !isConnect) {
-            Log.e(TAG, "reconnect");
+            Log.i(TAG, "reconnect");
             reconnectNum--;
             SystemClock.sleep(reconnectIntervalTime);
             if (isNeedReconnect && reconnectNum > 0 && !isConnect) {
-                Log.e(TAG, "reconnected");
+                Log.i(TAG, "reconnected");
                 connectServer();
             }
         }

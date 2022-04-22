@@ -52,7 +52,7 @@ public class AsyncSSLTCP implements AsyncTCPInterface {
                 if (channelFuture.isSuccess()) {                //4
                     NettyLog.i( "Send data successful");
                 } else {
-                    NettyLog.i( "Send data error");
+                    NettyLog.e( "Send data error");
                 }
             }
         });
