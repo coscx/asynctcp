@@ -63,36 +63,10 @@ public class NettyClient {
     public SSLContext createSSLContext(Context context) {
         SSLContext sslContext = null;
         try {
-            String keyPassword = "wan111111";
-
-            // key store manager
-            KeyStore keyStore = KeyStore.getInstance("PKCS12");
-            InputStream keyInput = context.getResources().getAssets().open("test.p12");
-            keyStore.load(keyInput, keyPassword.toCharArray());
-            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-            keyManagerFactory.init(keyStore, keyPassword.toCharArray());
-            keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-            keyManagerFactory.init(keyStore, keyPassword.toCharArray());
-
-            // trust store manager
-            CertificateFactory cf = CertificateFactory.getInstance("X509");
-            InputStream caInput = context.getResources().getAssets().open("test.pem");
-            Certificate ca;
-            try {
-                ca = cf.generateCertificate(caInput);
-            } finally {
-                caInput.close();
-            }
-            KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
-            trustStore.load(null, null);
-            trustStore.setCertificateEntry("CA", ca);
-            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            trustManagerFactory.init(trustStore);
-
             // assemble
             sslContext = SSLContext.getInstance("TLS");
-            //sslContext.init(null, trustManagerFactory.getTrustManagers(), null);
-            sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), null);
+            sslContext.init(null, null, null);
+
         } catch (Exception e) {
             e.printStackTrace();
         }
